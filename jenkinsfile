@@ -1,50 +1,20 @@
 pipeline {
-    agent any
-    stages {
-        stage('Build') {
-            steps {
-                echo "Running build";
-                bat 'build.bat'
-            }
-        }
-        stage('Unit-Tests') {
-            steps {
-                echo "Running unit tests";
-                bat 'unit.bat'
-            }
-        }
-        stage('Quality-Gate') {
-            steps {
-                echo "Verifying quality gate";
-                bat 'quality.bat'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo "Deploying";
-                bat 'deploy.bat'
-            }
-        }
+  agent any
+  tools {
+    maven 'maven-3.6.3' 
+  }
+  stages {
+    stage ('Build') {
+      steps {
+        sh 'mvn clean package'
+      }
     }
-    
-    post {
-        always {
-            echo 'This will always run'
+    stage ('Deploy') {
+      steps {
+        script {
+          deploy adapters: [tomcat9(credentialsId: 'tomcat_credential', path: '', url: 'http://localhost:8081')], contextPath: '/pipeline', onFailure: false, war: 'webapp/target/*.war' 
         }
-        success {
-            echo 'This will run only if successful'
-        }
-        failure {
-            echo 'This will run only if failed'
-        }
-        unstable {
-            echo 'This will run only if the run was marked unstable'
-        }
-        changed {
-            echo 'This will run only if the state of the Pipeline jas changed'
-            echo 'For example, if the Pipeline was previously failing but is now successful'
-        }
+      }
     }
+  }
 }
-Footer
-© 2022 GitHub, I
